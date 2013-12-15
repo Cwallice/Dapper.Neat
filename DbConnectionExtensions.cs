@@ -29,18 +29,6 @@ namespace Dapper.Neat
             return connection.Query<TSource>(String.Format("Select {0} from {1} {2};", structureMap.GetColumns("it"), structureMap.TableName, "it"));
         }
 
-        public static IEnumerable<TSource> Where<TSource>(this IDbConnection connection, Expression<Func<TSource, bool>> predicate)
-        {
-            var structureMap = LeanMapper.GetMapper<TSource>();
-            if (structureMap == null)
-                return new List<TSource>();
-
-            var builder = new SqlBuilder();
-            var template = builder.AddTemplate("/**select**/ /**from**/ /**where**/");
-            builder.Select<TSource>().Where(predicate);
-            return connection.Query<TSource>(template.RawSql, template.Parameters);
-        }
-
         public static TSource Insert<TSource>(this IDbConnection connection, TSource Data)
         {
             var structureMap = LeanMapper.GetMapper<TSource>();
