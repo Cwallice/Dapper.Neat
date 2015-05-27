@@ -12,7 +12,7 @@ namespace Dapper.Neat.Mapper
     public class StructureMapTypeMapper : SqlMapper.ITypeMap
     {
         private readonly SqlMapper.ITypeMap _defaultTypeMap;
-        private readonly List<IStructureMapItem> _mapItems;
+        private readonly List<IPropertyDescriptor> _mapItems;
         private readonly IStructureMap _structureMap;
 
         public StructureMapTypeMapper(IStructureMap structureMap, SqlMapper.ITypeMap defaultTypeMap)
@@ -44,7 +44,7 @@ namespace Dapper.Neat.Mapper
                 _mapItems.FirstOrDefault(
                     mi => mi.DestinationName.Equals(columnName, StringComparison.InvariantCultureIgnoreCase));
             if (mapItem != null)
-                return new StructureMapMemberMap(mapItem.SourceMemberInfo, columnName);
+                return new StructureMapMemberMap(mapItem.PropertyInfo, columnName);
 
             if (_structureMap.MapExtraColumns)
                 return _defaultTypeMap.GetMember(columnName);

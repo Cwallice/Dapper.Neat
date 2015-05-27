@@ -51,10 +51,10 @@
     <Compile Include="Exceptions\DapperNeatException.cs" />
     <Compile Include="Exceptions\ThereisNoStructureMapException.cs" />
     <Compile Include="ExpressionHelper.cs" />
-    <Compile Include="Mapper\ColumnReadWriteState.cs" />
+    <Compile Include="Mapper\IdPropertyDescriptor.cs" />
     <Compile Include="Mapper\LeanMapper.cs" />
     <Compile Include="Mapper\StructureMap.cs" />
-    <Compile Include="Mapper\StructureMapItem.cs" />
+    <Compile Include="Mapper\PropertyDescriptor.cs" />
     <Compile Include="Mapper\StructureMapTypeMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueryFunctionFactory.cs" />

@@ -124,9 +124,9 @@ namespace Dapper.Neat
             return methodInfo.Invoke(null, new object[] {idProperty}) as Expression;
         }
 
-        private static Expression GetIdEvaluatorFromMappingItem<TSource, TDestination, TResult>(IStructureMapItem<TSource, TDestination> mappingItem)
+        private static Expression GetIdEvaluatorFromMappingItem<TSource, TDestination, TResult>(IPropertyDescriptor<TSource, TDestination> mappingItem)
         {
-            return Expression.Constant((mappingItem as StructureMapItem<TSource, TDestination, TResult>).PropertyGetter);
+            return Expression.Constant((mappingItem as PropertyDescriptor<TSource, TDestination, TResult>).PropertyGetter);
         }
 
         private static MethodInfo GetSqlMapperQueryMethod(MappingFunctionDescriptor funcDescriptor)

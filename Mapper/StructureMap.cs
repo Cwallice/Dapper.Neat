@@ -32,8 +32,8 @@ namespace Dapper.Neat.Mapper
         Type SourceType { get; }
         string TableName { get; }
         string UpdateSqlTemplate { get; }
-        IStructureMapItem GetPropertyItem(string name);
-        List<IStructureMapItem> GetPropertyItems();
+        IPropertyDescriptor GetPropertyItem(string name);
+        List<IPropertyDescriptor> GetPropertyItems();
         bool MapExtraColumns { get; set; }
         #endregion
     }
@@ -60,10 +60,10 @@ namespace Dapper.Neat.Mapper
 
         #region Fields (private)
 
-        private readonly List<IStructureMapItem<TSource, TDestination>> structureMapList =
-            new List<IStructureMapItem<TSource, TDestination>>();
+        private readonly List<IPropertyDescriptor<TSource, TDestination>> structureMapList =
+            new List<IPropertyDescriptor<TSource, TDestination>>();
 
-        private IStructureMapItem<TSource, TDestination> idStructureMap;
+        private IPropertyDescriptor<TSource, TDestination> idStructureMap;
 
         #endregion
 
@@ -92,14 +92,14 @@ namespace Dapper.Neat.Mapper
 
         public string UpdateSqlTemplate { get; private set; }
 
-        IStructureMapItem IStructureMap.GetPropertyItem(string name)
+        IPropertyDescriptor IStructureMap.GetPropertyItem(string name)
         {
             return GetPropertyItem(name);
         }
 
-        public List<IStructureMapItem> GetPropertyItems()
+        public List<IPropertyDescriptor> GetPropertyItems()
         {
-            var items = structureMapList.Select(si => si as IStructureMapItem).ToList();
+            var items = structureMapList.Select(si => si as IPropertyDescriptor).ToList();
             if (idStructureMap != null)
                 items.Add(idStructureMap);
             return items;
@@ -117,7 +117,7 @@ namespace Dapper.Neat.Mapper
         public string GetColumns(string alias)
         {
             var totalList = idStructureMap != null 
-                ? (new List<IStructureMapItem<TSource, TDestination>> { idStructureMap }).Union(structureMapList)
+                ? (new List<IPropertyDescriptor<TSource, TDestination>> { idStructureMap }).Union(structureMapList)
                 : structureMapList;
             return String.Join(",",
                 totalList.Select(x => FormatColumn(alias,x.DestinationName,x.SourceName)));
@@ -209,33 +209,33 @@ namespace Dapper.Neat.Mapper
             return this;
         }
 
-        public IStructureMapItem<TSource, TDestination> GetIdPropertyItem()
+        public IPropertyDescriptor<TSource, TDestination> GetIdPropertyItem()
         {
             return idStructureMap;
         }
 
-        public IStructureMapItem<TSource, TDestination> GetPropertyItem(string name)
+        public IPropertyDescriptor<TSource, TDestination> GetPropertyItem(string name)
         {
             return (structureMapList.FirstOrDefault(sm => sm.SourceName == name)) ??
                    (idStructureMap.SourceName == name ? idStructureMap : null);
         }
 
-        public StructureMapItem<TSource, TDestination, TResult> MapIdProperty<TResult>(
+        public PropertyDescriptor<TSource, TDestination, TResult> MapIdProperty<TResult>(
             Expression<Func<TSource, TResult>> sourceExpression,
             Expression<Func<TDestination, TResult>> destinationExpression = null)
         {
             destinationExpression = destinationExpression ?? sourceExpression as Expression<Func<TDestination, TResult>>;
-            var idMapping = new StructureMapItem<TSource, TDestination, TResult>(sourceExpression, destinationExpression);
+            var idMapping = new PropertyDescriptor<TSource, TDestination, TResult>(sourceExpression, destinationExpression);
             idStructureMap = idMapping;
             return idMapping;
         }
 
-        public StructureMapItem<TSource, TDestination, TResult> MapProperty<TResult>(
+        public PropertyDescriptor<TSource, TDestination, TResult> MapProperty<TResult>(
             Expression<Func<TSource, TResult>> sourceExpression,
             Expression<Func<TDestination, TResult>> destinationExpression = null)
         {
             destinationExpression = destinationExpression ?? sourceExpression as Expression<Func<TDestination, TResult>>;
-            var newStructureMap = new StructureMapItem<TSource, TDestination, TResult>(sourceExpression,
+            var newStructureMap = new PropertyDescriptor<TSource, TDestination, TResult>(sourceExpression,
                 destinationExpression);
             if (idStructureMap != null && (newStructureMap.SourceName == idStructureMap.SourceName || newStructureMap.DestinationName == idStructureMap.DestinationName))
                 return newStructureMap;
