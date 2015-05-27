@@ -154,3 +154,10 @@ $RECYCLE.BIN/
 
 # Mac desktop service store files
 .DS_Store
+/packages/Dapper.1.42/*.nupkg
+/packages/Dapper.1.42/lib/net35/*.dll
+/packages/Dapper.1.42/lib/net35/*.xml
+/packages/Dapper.1.42/lib/net40/*.dll
+/packages/Dapper.1.42/lib/net40/*.xml
+/packages/Dapper.1.42/lib/net45/*.dll
+/packages/Dapper.1.42/lib/net45/*.xml

@@ -29,13 +29,19 @@ namespace Dapper.Neat
             return Expression.Lambda<Func<TSource, TResult>>(propertyExpression, parameter);
         }
 
+        public static MemberInfo GetMemberInfo(Expression memberExpression)
+        {
+            if (memberExpression is UnaryExpression)
+                return GetMemberInfo((memberExpression as UnaryExpression).Operand);
+            if (memberExpression.NodeType != ExpressionType.MemberAccess)
+                return null;
+            return (memberExpression as MemberExpression).Member;
+        }
+
         public static string GetPropertyName(Expression propertyExpression)
         {
-            if (propertyExpression is UnaryExpression)
-                return GetPropertyName((propertyExpression as UnaryExpression).Operand);
-            if (propertyExpression.NodeType != ExpressionType.MemberAccess)
-                return null;
-            return (propertyExpression as MemberExpression).Member.Name;
+            var memberinfo = GetMemberInfo(propertyExpression);
+            return memberinfo != null ? memberinfo.Name : null;
         }
 
         public static MethodInfo MakeGenericMethod<T1>(Expression<Func<T1>> action, params Type[] genericTypes)
@@ -61,29 +67,38 @@ namespace Dapper.Neat
 
     public static class ExpressionParser
     {
-        public static Tuple<string, string, object> ParseExpression<TSource>(Expression<Func<TSource, bool>> predicate) //Experiments
+        public static Tuple<string, string, object, Type> ParseExpression<TSource>(Expression<Func<TSource, bool>> predicate) //Experiments
         {
             //1 checkout if expression is unary
             var body = predicate.Body;
             string left = String.Empty;
             object right = null;
+            Type propertyType = null;
             string condition = "=";
             if (body is UnaryExpression && body.NodeType == ExpressionType.Not)
             {
-                left = ((body as UnaryExpression).Operand as MemberExpression).Member.Name;
+                var member = ((body as UnaryExpression).Operand as MemberExpression).Member;
+                left = member.Name;
+                propertyType = member.DeclaringType;
                 right = 0;
             }
 
             if (body.NodeType == ExpressionType.MemberAccess)
             {
-                left = (body as MemberExpression).Member.Name;
+                var member = (body as MemberExpression).Member;
+                left = member.Name;
+                propertyType = member.DeclaringType;
                 right = 1;
             }
 
 
             if (body is BinaryExpression)
             {
-                left = LeanMapper.GetMapper<TSource>().GetPropertyName(BinaryPartExpression((body as BinaryExpression).Left));
+                var propertyItem =
+                    LeanMapper.GetMapper<TSource>()
+                        .GetPropertyItem(BinaryPartExpression((body as BinaryExpression).Left).ToString());
+                left = propertyItem.DestinationName;
+                propertyType = propertyItem.ResultType;
                 right = BinaryPartExpression((body as BinaryExpression).Right);
                 switch (body.NodeType)
                 {
@@ -107,28 +122,17 @@ namespace Dapper.Neat
                         break;
                 }
             }
-
-
-            //if (body is MethodCallExpression && (((body as MethodCallExpression).Object as MemberExpression).Member as PropertyInfo).PropertyType == typeof(string))
-            //{
-            //    if ((body as MethodCallExpression).Method.Name == "StartsWith")
-            //        condition = String.Format("{0} like '{1}%'", LeanMapper.GetMapper<TSource>().GetPropertyName(((body as MethodCallExpression).Object as MemberExpression).Member.Name),
-            //                                  BinaryPartExpression((body as MethodCallExpression).Arguments[0]));
-            //    if ((body as MethodCallExpression).Method.Name == "EndsWith")
-            //        condition = String.Format("{0} like '%{1}'", LeanMapper.GetMapper<TSource>().GetPropertyName(((body as MethodCallExpression).Object as MemberExpression).Member.Name),
-            //                                  BinaryPartExpression((body as MethodCallExpression).Arguments[0]));
-            //}
             //dirty fix
-            return new Tuple<string, string, object>(left, condition, right);
+            return new Tuple<string, string, object, Type>(left, condition, right, propertyType);
         }
 
-        private static string BinaryPartExpression(Expression exp)
+        private static object BinaryPartExpression(Expression exp)
         {
             object evaluated;
             if (TryEvaluate(exp, out evaluated) && (exp.NodeType == ExpressionType.MemberAccess || exp.NodeType == ExpressionType.Constant))
-                return evaluated.ToString();
+                return evaluated;
             if (exp is MethodCallExpression)
-                return Expression.Lambda(exp as MethodCallExpression).Compile().DynamicInvoke().ToString();
+                return Expression.Lambda(exp as MethodCallExpression).Compile().DynamicInvoke();
             if (exp is UnaryExpression)
                 return BinaryPartExpression((exp as UnaryExpression).Operand);
             return (exp as MemberExpression).Member.Name;
