@@ -1,8 +1,10 @@
 ﻿#region Usings
+
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
 using Dapper.Neat.Mapper;
+
 #endregion
 
 namespace Dapper.Neat
@@ -11,20 +13,21 @@ namespace Dapper.Neat
     {
         public static ParameterExpression CreateGenericFuncParameter(string name, params Type[] types)
         {
-            return Expression.Parameter(typeof (Expression<>).MakeGenericType(typeof (Func<,>).MakeGenericType(types)), name);
+            return Expression.Parameter(typeof(Expression<>).MakeGenericType(typeof(Func<,>).MakeGenericType(types)),
+                name);
         }
 
         public static Expression GetPropertyExpression(PropertyInfo property)
         {
             var parameter = Expression.Parameter(property.ReflectedType, "source");
             var propertyExpression = Expression.Property(parameter, property);
-            var delegateType = typeof (Func<,>).MakeGenericType(property.ReflectedType, property.PropertyType);
+            var delegateType = typeof(Func<,>).MakeGenericType(property.ReflectedType, property.PropertyType);
             return Expression.Lambda(delegateType, propertyExpression, parameter);
         }
 
         public static Expression<Func<TSource, TResult>> GetPropertyExpression<TSource, TResult>(PropertyInfo property)
         {
-            var parameter = Expression.Parameter(typeof (TSource), "source");
+            var parameter = Expression.Parameter(typeof(TSource), "source");
             var propertyExpression = Expression.Property(parameter, property);
             return Expression.Lambda<Func<TSource, TResult>>(propertyExpression, parameter);
         }
@@ -61,13 +64,14 @@ namespace Dapper.Neat
 
     public static class ExpressionParser
     {
-        public static Tuple<string, string, object> ParseExpression<TSource>(Expression<Func<TSource, bool>> predicate) //Experiments
+        public static Tuple<string, string, object> ParseExpression<TSource>(Expression<Func<TSource, bool>> predicate)
+            //Experiments
         {
             //1 checkout if expression is unary
             var body = predicate.Body;
-            string left = String.Empty;
+            var left = string.Empty;
             object right = null;
-            string condition = "=";
+            var condition = "=";
             if (body is UnaryExpression && body.NodeType == ExpressionType.Not)
             {
                 left = ((body as UnaryExpression).Operand as MemberExpression).Member.Name;
@@ -83,7 +87,9 @@ namespace Dapper.Neat
 
             if (body is BinaryExpression)
             {
-                left = LeanMapper.GetMapper<TSource>().GetPropertyName(BinaryPartExpression((body as BinaryExpression).Left));
+                left =
+                    LeanMapper.GetMapper<TSource>()
+                        .GetPropertyName(BinaryPartExpression((body as BinaryExpression).Left));
                 right = BinaryPartExpression((body as BinaryExpression).Right);
                 switch (body.NodeType)
                 {
@@ -125,7 +131,8 @@ namespace Dapper.Neat
         private static string BinaryPartExpression(Expression exp)
         {
             object evaluated;
-            if (TryEvaluate(exp, out evaluated) && (exp.NodeType == ExpressionType.MemberAccess || exp.NodeType == ExpressionType.Constant))
+            if (TryEvaluate(exp, out evaluated) &&
+                (exp.NodeType == ExpressionType.MemberAccess || exp.NodeType == ExpressionType.Constant))
                 return evaluated.ToString();
             if (exp is MethodCallExpression)
                 return Expression.Lambda(exp as MethodCallExpression).Compile().DynamicInvoke().ToString();
@@ -148,7 +155,7 @@ namespace Dapper.Neat
                     value = ((ConstantExpression) operation).Value;
                     return true;
                 case ExpressionType.MemberAccess:
-                    MemberExpression me = (MemberExpression) operation;
+                    var me = (MemberExpression) operation;
                     object target;
                     if (TryEvaluate(me.Expression, out target))
                     {

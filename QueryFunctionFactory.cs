@@ -1,6 +1,4 @@
-﻿#region Usings
-
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
@@ -9,7 +7,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Dapper.Neat.Mapper;
 
-#endregion
 
 namespace Dapper.Neat
 {
@@ -24,7 +21,7 @@ namespace Dapper.Neat
             int? commandTimeout = null,
             CommandType? commandType = null)
         {
-            int hashKey = map.GetHashCode();
+            var hashKey = map.GetHashCode();
             if (!_cachedQueryFunctions.ContainsKey(hashKey))
             {
                 _cachedQueryFunctions.AddOrUpdate(hashKey,
@@ -41,8 +38,8 @@ namespace Dapper.Neat
                     IEnumerable<TReturn>>
             BuildFunction<TReturn, TFunc>()
         {
-            var mappingDescriptor = new MappingFunctionDescriptor(typeof (TFunc));
-            MethodInfo queryMethodSignature = GetSqlMapperQueryMethod(mappingDescriptor);
+            var mappingDescriptor = new MappingFunctionDescriptor(typeof(TFunc));
+            var queryMethodSignature = GetSqlMapperQueryMethod(mappingDescriptor);
 
             // variables that are visible in main scope
             var variables = new List<ParameterExpression>();
@@ -56,9 +53,9 @@ namespace Dapper.Neat
             var mappingBodyExpressions = new List<Expression>();
 
             // declare and assign dictionaries and id evaluators for mapped types
-            foreach (Type type in mappingDescriptor.GenericTypes.Take(mappingDescriptor.GenericTypes.Length - 1))
+            foreach (var type in mappingDescriptor.GenericTypes.Take(mappingDescriptor.GenericTypes.Length - 1))
             {
-                IStructureMap mapper = LeanMapper.GetMapper(type);
+                var mapper = LeanMapper.GetMapper(type);
                 mappingParameters.Add(Expression.Parameter(type));
                 if (mapper == null)
                     continue;
@@ -67,27 +64,27 @@ namespace Dapper.Neat
             }
 
             // declare parameters for main query method (they will be passed down to inner SqlMapper.Query method call)
-            ParameterExpression cnnP = Expression.Parameter(typeof (IDbConnection), "cnn");
-            ParameterExpression sqlP = Expression.Parameter(typeof (string), "sql");
-            ParameterExpression mapParam = Expression.Parameter(mappingDescriptor.MappingType, "map");
-            ParameterExpression paramP = Expression.Parameter(typeof (object), "param");
-            ParameterExpression transactionP = Expression.Parameter(typeof (IDbTransaction), "transaction");
-            ParameterExpression bufferedP = Expression.Parameter(typeof (bool), "buffered");
-            ParameterExpression splitOnP = Expression.Parameter(typeof (string), "splitOn");
-            ParameterExpression commandTimeoutP = Expression.Parameter(typeof (int?), "commandTimeout");
-            ParameterExpression commandTypeP = Expression.Parameter(typeof (CommandType?), "commandType");
-            ParameterExpression newMapper = Expression.Parameter(mappingDescriptor.MappingType, "newMapper");
+            var cnnP = Expression.Parameter(typeof(IDbConnection), "cnn");
+            var sqlP = Expression.Parameter(typeof(string), "sql");
+            var mapParam = Expression.Parameter(mappingDescriptor.MappingType, "map");
+            var paramP = Expression.Parameter(typeof(object), "param");
+            var transactionP = Expression.Parameter(typeof(IDbTransaction), "transaction");
+            var bufferedP = Expression.Parameter(typeof(bool), "buffered");
+            var splitOnP = Expression.Parameter(typeof(string), "splitOn");
+            var commandTimeoutP = Expression.Parameter(typeof(int?), "commandTimeout");
+            var commandTypeP = Expression.Parameter(typeof(CommandType?), "commandType");
+            var newMapper = Expression.Parameter(mappingDescriptor.MappingType, "newMapper");
             methodBodyExpressions.Add(Expression.Assign(newMapper,
                 FinishFakeMappingFunction<TReturn, TFunc>(mapParam, mappingParameters, mappingBodyExpressions)));
             variables.Add(newMapper);
             //call REAL Query Method
-            MethodCallExpression callRealDapperMethod = Expression.Call(queryMethodSignature, cnnP, sqlP, newMapper,
+            var callRealDapperMethod = Expression.Call(queryMethodSignature, cnnP, sqlP, newMapper,
                 paramP, transactionP, bufferedP, splitOnP, commandTimeoutP, commandTypeP);
 
-            LabelTarget returnFinalTarget = Expression.Label(typeof (IEnumerable<TReturn>));
-            GotoExpression returnFinalValue = Expression.Return(returnFinalTarget, callRealDapperMethod);
-            LabelExpression rerturnFinalExpression = Expression.Label(returnFinalTarget,
-                Expression.Default(typeof (IEnumerable<TReturn>)));
+            var returnFinalTarget = Expression.Label(typeof(IEnumerable<TReturn>));
+            var returnFinalValue = Expression.Return(returnFinalTarget, callRealDapperMethod);
+            var rerturnFinalExpression = Expression.Label(returnFinalTarget,
+                Expression.Default(typeof(IEnumerable<TReturn>)));
             methodBodyExpressions.Add(returnFinalValue);
             methodBodyExpressions.Add(rerturnFinalExpression);
 
@@ -104,7 +101,7 @@ namespace Dapper.Neat
         private static MethodCallExpression BuildUniquenessCheckerExpression(IStructureMap mapper,
             ParameterExpression dictionary, ParameterExpression idPropertyEvaluator, ParameterExpression data)
         {
-            MethodInfo getUniqueDataFunction =
+            var getUniqueDataFunction =
                 ExpressionHelper.MakeGenericMethod(() => GetUniqueData<string, string>(null, null, null),
                     mapper.IdPropertyType, mapper.SourceType);
             return Expression.Call(getUniqueDataFunction, dictionary, idPropertyEvaluator, data);
@@ -113,10 +110,10 @@ namespace Dapper.Neat
         private static Expression<TFunc> FinishFakeMappingFunction<TReturn, TFunc>(Expression mapParam,
             List<ParameterExpression> mappingParameters, List<Expression> mappingBodyExpressions)
         {
-            InvocationExpression invokeRealMappingFunc = Expression.Invoke(mapParam, mappingParameters);
-            LabelTarget returnTarget = Expression.Label(typeof (TReturn));
-            GotoExpression returnValue = Expression.Return(returnTarget, invokeRealMappingFunc);
-            LabelExpression rerturnExpression = Expression.Label(returnTarget, Expression.Default(typeof (TReturn)));
+            var invokeRealMappingFunc = Expression.Invoke(mapParam, mappingParameters);
+            var returnTarget = Expression.Label(typeof(TReturn));
+            var returnValue = Expression.Return(returnTarget, invokeRealMappingFunc);
+            var rerturnExpression = Expression.Label(returnTarget, Expression.Default(typeof(TReturn)));
             mappingBodyExpressions.Add(returnValue);
             mappingBodyExpressions.Add(rerturnExpression);
             return Expression.Lambda<TFunc>(Expression.Block(mappingBodyExpressions), mappingParameters);
@@ -124,19 +121,19 @@ namespace Dapper.Neat
 
         private static Tuple<ParameterExpression, Type> GetDictionaryVariableForUniqueCheck(Type key, Type value)
         {
-            Type type = typeof (Dictionary<,>).MakeGenericType(new[] {key, value});
+            var type = typeof(Dictionary<,>).MakeGenericType(key, value);
             return new Tuple<ParameterExpression, Type>(Expression.Parameter(type), type);
         }
 
         private static Tuple<ParameterExpression, ConstantExpression> GetIdEvaluatorExpression(IStructureMap mapper)
         {
-            MethodInfo methodInfo =
+            var methodInfo =
                 ExpressionHelper.MakeGenericMethod(() => GetIdEvaluatorFromMapper<string, string>(null),
                     mapper.SourceType, mapper.DestinationType);
             var idPropertyEvaluatorConstant = methodInfo.Invoke(null, new object[] {mapper}) as ConstantExpression;
-            if(idPropertyEvaluatorConstant==null)
+            if (idPropertyEvaluatorConstant == null)
                 throw new InvalidCastException("cant't cast idPropertyEvaluatorConstant to ConstantExpression");
-            ParameterExpression idPropertyEvaluatorParameter = Expression.Parameter(idPropertyEvaluatorConstant.Type);
+            var idPropertyEvaluatorParameter = Expression.Parameter(idPropertyEvaluatorConstant.Type);
             return new Tuple<ParameterExpression, ConstantExpression>(idPropertyEvaluatorParameter,
                 idPropertyEvaluatorConstant);
         }
@@ -144,11 +141,11 @@ namespace Dapper.Neat
         private static Expression GetIdEvaluatorFromMapper<TSource, TDestination>(IStructureMap mapper)
             where TSource : class
         {
-            IStructureMapItem<TSource, TDestination> idProperty =
+            var idProperty =
                 (mapper as StructureMap<TSource, TDestination>).GetIdPropertyItem();
-            MethodInfo methodInfo =
+            var methodInfo =
                 ExpressionHelper.MakeGenericMethod(() => GetIdEvaluatorFromMappingItem<string, string, string>(null),
-                    typeof (TSource), mapper.DestinationType, idProperty.ResultType);
+                    typeof(TSource), mapper.DestinationType, idProperty.ResultType);
             return methodInfo.Invoke(null, new object[] {idProperty}) as Expression;
         }
 
@@ -160,8 +157,8 @@ namespace Dapper.Neat
 
         private static MethodInfo GetSqlMapperQueryMethod(MappingFunctionDescriptor funcDescriptor)
         {
-            MethodInfo firstOrDefault =
-                typeof (SqlMapper).GetMethods()
+            var firstOrDefault =
+                typeof(SqlMapper).GetMethods()
                     .FirstOrDefault(
                         m =>
                             m.Name == "Query" && m.IsGenericMethod &&
@@ -172,11 +169,11 @@ namespace Dapper.Neat
         }
 
         private static TValue GetUniqueData<TKey, TValue>(Dictionary<TKey, TValue> dict, Func<TValue, TKey> evaluator,
-            TValue data) 
+            TValue data)
         {
             if (data == null)
                 return dict.Values.FirstOrDefault();
-            TKey key = evaluator(data);
+            var key = evaluator(data);
             if (!dict.ContainsKey(key))
                 dict.Add(key, data);
 
@@ -190,21 +187,21 @@ namespace Dapper.Neat
             IStructureMap mapper)
         {
             //get and assign dictionaries
-            Tuple<ParameterExpression, Type> dictParamAndVariable =
+            var dictParamAndVariable =
                 GetDictionaryVariableForUniqueCheck(mapper.IdPropertyType, mapper.SourceType);
-            BinaryExpression dictAssignment = Expression.Assign(dictParamAndVariable.Item1,
+            var dictAssignment = Expression.Assign(dictParamAndVariable.Item1,
                 Expression.New(dictParamAndVariable.Item2));
             variables.Add(dictParamAndVariable.Item1);
             bodyExpressions.Add(dictAssignment);
             //get and assign id evaluators
-            Tuple<ParameterExpression, ConstantExpression> propertyEvaluatorParamAndValue =
+            var propertyEvaluatorParamAndValue =
                 GetIdEvaluatorExpression(mapper);
-            BinaryExpression evaulatorAssignment = Expression.Assign(propertyEvaluatorParamAndValue.Item1,
+            var evaulatorAssignment = Expression.Assign(propertyEvaluatorParamAndValue.Item1,
                 propertyEvaluatorParamAndValue.Item2);
             variables.Add(propertyEvaluatorParamAndValue.Item1);
             bodyExpressions.Add(evaulatorAssignment);
             // declare data parameters and assign them to inner fake mapping function declaration
-            MethodCallExpression checkerExpression = BuildUniquenessCheckerExpression(mapper, dictParamAndVariable.Item1,
+            var checkerExpression = BuildUniquenessCheckerExpression(mapper, dictParamAndVariable.Item1,
                 propertyEvaluatorParamAndValue.Item1, dataParameter);
             mappingBodyExpressions.Add(Expression.Assign(dataParameter, checkerExpression));
         }

@@ -1,17 +1,12 @@
-﻿#region Usings
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Linq.Expressions;
 using Dapper.Neat.Mapper;
-#endregion
 
 namespace Dapper.Neat
 {
     public static class Extensions
     {
-        #region Static Methods (public)
         public static void Delete<TSource>(this IDbConnection connection, TSource Data)
         {
             var structureMap = LeanMapper.GetMapper<TSource>();
@@ -26,7 +21,9 @@ namespace Dapper.Neat
             var structureMap = LeanMapper.GetMapper<TSource>();
             if (structureMap == null)
                 return new List<TSource>();
-            return connection.Query<TSource>(String.Format("Select {0} from {1} {2};", structureMap.GetColumns("it"), structureMap.TableName, "it"));
+            return
+                connection.Query<TSource>(string.Format("Select {0} from {1} {2};", structureMap.GetColumns("it"),
+                    structureMap.TableName, "it"));
         }
 
         public static TSource Insert<TSource>(this IDbConnection connection, TSource Data)
@@ -56,26 +53,29 @@ namespace Dapper.Neat
                 (cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 
-        public static IEnumerable<TReturn> NeatQuery<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null,
-                                                                                       IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null,
-                                                                                       CommandType? commandType = null)
+        public static IEnumerable<TReturn> NeatQuery<TFirst, TSecond, TThird, TReturn>(this IDbConnection cnn,
+            string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null,
+            IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null,
+            CommandType? commandType = null)
         {
             return QueryFunctionFactory.CallQuery<TReturn, Func<TFirst, TSecond, TThird, TReturn>>
                 (cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 
-        public static IEnumerable<TReturn> NeatQuery<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map,
-                                                                                                dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id",
-                                                                                                int? commandTimeout = null, CommandType? commandType = null)
+        public static IEnumerable<TReturn> NeatQuery<TFirst, TSecond, TThird, TFourth, TReturn>(this IDbConnection cnn,
+            string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map,
+            dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id",
+            int? commandTimeout = null, CommandType? commandType = null)
         {
             return QueryFunctionFactory.CallQuery<TReturn, Func<TFirst, TSecond, TThird, TFourth, TReturn>>
                 (cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
         }
 
-        public static IEnumerable<TReturn> NeatQuery<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map,
-                                                                                                        dynamic param = null, IDbTransaction transaction = null, bool buffered = true,
-                                                                                                        string splitOn = "Id",
-                                                                                                        int? commandTimeout = null, CommandType? commandType = null)
+        public static IEnumerable<TReturn> NeatQuery<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(
+            this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map,
+            dynamic param = null, IDbTransaction transaction = null, bool buffered = true,
+            string splitOn = "Id",
+            int? commandTimeout = null, CommandType? commandType = null)
         {
             return QueryFunctionFactory.CallQuery<TReturn, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>>
                 (cnn, sql, map, param, transaction, buffered, splitOn, commandTimeout, commandType);
@@ -89,6 +89,6 @@ namespace Dapper.Neat
             var dynamicParameters = structureMap.GetParameters(Data, false);
             connection.Execute(structureMap.UpdateSqlTemplate, dynamicParameters);
         }
-        #endregion
+
     }
 }
