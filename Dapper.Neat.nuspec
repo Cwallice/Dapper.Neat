@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Dapper.Neat</id>
+    <version>0.1</version>
+    <title>Dapper Neat</title>
+    <authors>Cwallice</authors>
+    <owners>Cwallice</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>https://github.com/Cwallice/Dapper.Neat</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Helper around Dapper that supports strong typed mapping from data objects to business objects on the fly</description>
+    <releaseNotes>
+      #Release 0.1
+      * mapping using lambda expression
+      * CRUD helpers
+      * custom id field
+      * support for stored
+      * ignores mapped duplicates from sql joins
+      * custom table names
+      * read/write restriction on mapping
+      #LIMITATIONS
+      Bound to T-SQL for a moment via SCOPE_IDENTITY
+       </releaseNotes>
+    <copyright>Copyright 2016</copyright>
+    <tags>Dapper ORM</tags>
+  </metadata>
+</package>
